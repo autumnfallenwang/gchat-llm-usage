@@ -57,7 +57,9 @@ function stateAfter(...runs: Family[][]): State {
 
 describe("bucketOf", () => {
   it("is the highest threshold reached", () => {
-    expect([0, 9.9, 10, 45, 96, 99, 100].map(bucketOf)).toEqual([0, 0, 10, 40, 90, 99, 99]);
+    expect([0, 9.9, 10, 45, 94.9, 96, 99.9, 100].map(bucketOf)).toEqual([
+      0, 0, 10, 40, 90, 95, 95, 100,
+    ]);
   });
 });
 
@@ -98,14 +100,21 @@ describe("decide", () => {
     ]);
   });
 
-  it("marks 99% and 100% red", () => {
+  it("marks 95% red and 100% as the limit reached", () => {
     const state = stateAfter(families(45, 12.5, 85));
-    expect(texts(decide(state, families(45, 12.5, 99.4), fmt))[0]).toMatch(
-      /^🔴 \*Codex weekly\*: 99\.4% used \(crossed 99%\)\. 0\.6% left/,
+    expect(texts(decide(state, families(45, 12.5, 95.4), fmt))[0]).toMatch(
+      /^🔴 \*Codex weekly\*: 95\.4% used \(crossed 95%\)\. 4\.6% left/,
     );
     expect(texts(decide(state, families(45, 12.5, 100), fmt))).toEqual([
-      "🔴 *Codex weekly* limit reached: 100% used. Resets Mon, Jan 7, 11:00 PM EST (in 16h 0m).",
+      "⛔ *Codex weekly* limit reached: 100% used. Resets Mon, Jan 7, 11:00 PM EST (in 16h 0m).",
     ]);
+  });
+
+  // With 99% as the top threshold, 99 → 100 used to post nothing.
+  it("posts the limit reached after the 95% alert, and nothing in between", () => {
+    const at95 = decide(stateAfter(families(45, 12.5, 85)), families(45, 12.5, 96), fmt).next;
+    expect(decide(at95, families(45, 12.5, 99), fmt).messages).toEqual([]);
+    expect(texts(decide(at95, families(45, 12.5, 100), fmt))[0]).toMatch(/^⛔ .*limit reached/);
   });
 
   it("doesn't alert again when use dips below a threshold and comes back", () => {

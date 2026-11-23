@@ -2,8 +2,11 @@
 
 import type { Family, Window } from "./limits.js";
 
-/** Alert when a window's use crosses one of these, upward. A reset is the "0%" alert. */
-export const THRESHOLDS = [10, 20, 30, 40, 50, 60, 70, 80, 90, 99];
+/**
+ * Alert when a window's use crosses one of these, upward. A reset is the "0%" alert. 95% is the
+ * last warning with time left to act; 100% is the limit reached (ADR 0003).
+ */
+export const THRESHOLDS = [10, 20, 30, 40, 50, 60, 70, 80, 90, 95, 100];
 
 /** A drop this large in percent used is a reset, even if the reset time didn't move. */
 const RESET_DROP = 10;
@@ -143,9 +146,9 @@ function crossed(w: Window, bucket: number, fmt: Format): Message {
   const left = Math.max(0, 100 - w.used);
   let text: string;
   if (w.used >= 100) {
-    text = `🔴 *${label(w, fmt)}* limit reached: ${pct(w.used)} used. Resets ${when(w.resetsAt, fmt)}.`;
+    text = `⛔ *${label(w, fmt)}* limit reached: ${pct(w.used)} used. Resets ${when(w.resetsAt, fmt)}.`;
   } else {
-    const icon = bucket >= 99 ? "🔴" : bucket >= 80 ? "🟠" : "🟡";
+    const icon = bucket >= 95 ? "🔴" : bucket >= 80 ? "🟠" : "🟡";
     text = `${icon} *${label(w, fmt)}*: ${pct(w.used)} used (crossed ${bucket}%). ${pct(left)} left, resets ${when(w.resetsAt, fmt)}.`;
   }
   return { text, threadKey: threadKey(w) };

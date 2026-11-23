@@ -1,6 +1,7 @@
 # gchat-llm-usage
 
-Posts to a Google Chat space when a Claude or Codex usage window crosses 10%, 20%, … 90% or 99% used, and when it resets.
+Posts to a Google Chat space when a Claude or Codex usage window crosses 10%, 20%, … 90% or 95% used, when it hits
+the limit (100%), and when it resets.
 
 It's a k3s CronJob on the home cluster. Every 5 minutes it reads
 [llmgw](https://github.com/autumnfallenwang/llm-gateway)'s `GET /v1/limits`, compares each window with the last run's
@@ -10,7 +11,9 @@ state, posts what's new and exits ([ADR 0002](docs/adr/0002-cronjob-polling-llmg
 
 - **First run:** nothing. It records where each window is, so thresholds already passed aren't alerted on.
 - **A threshold crossed:** `🟠 *Codex weekly*: 92% used (crossed 90%). 8% left, resets Mon, Jan 7, 11:00 PM EST (in 16h 0m).`
-  Only the highest threshold crossed since the last run, and never the same one twice in a period.
+  Only the highest threshold crossed since the last run, and never the same one twice in a period. 🟡 below 80%,
+  🟠 80–90%, 🔴 95%.
+- **The limit reached:** `⛔ *Codex weekly* limit reached: 100% used. Resets …`
 - **A reset:** `🟢 *Codex weekly* reset: 0% used. Next reset …`
 - **A window llmgw starts reporting** (say, a 5-hour one after a plan change): `🆕 Now watching …`
 

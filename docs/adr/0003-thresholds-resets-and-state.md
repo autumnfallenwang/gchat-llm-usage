@@ -13,8 +13,12 @@ and llmgw's reset times jitter by fractions of a second between fetches (`…10:
 
 - **Windows are read, never assumed.** Each is keyed `provider|scope|period`. A window that appears gets a "now
   watching" message; one that's gone is dropped from state.
-- **Thresholds:** 10, 20, … 90 and 99% used. A run posts only the highest one crossed since the last run, and a
+- **Thresholds:** 10, 20, … 90, 95 and 100% used. A run posts only the highest one crossed since the last run, and a
   window's threshold never goes down without a reset, so a dip and recovery doesn't alert twice.
+- **Why 95 and 100, not 99:** at a heavy day's pace (about 2% of a weekly window an hour), 95% leaves a couple of hours
+  to finish a task or move to the other model; 99% leaves minutes, often lands in the same 5-minute poll as 100%, and
+  Codex reports whole numbers. 100% (⛔ limit reached) says you're cut off and until when; with 99% on top it could
+  never fire.
 - **A reset** is the reset time moving forward by more than an hour, or use dropping by 10 points or more. Reset times
   are never compared exactly.
 - **First run:** posts nothing. It records each window's threshold, so the ones already passed are never alerted on.
