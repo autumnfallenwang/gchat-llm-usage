@@ -1,0 +1,12 @@
+**/node_modules
+**/coverage
+**/.env
+**/.env.local
+**/*.md
+.git
+.github
+docs
+tests
+deploy/chart
+cluster-secrets.env
+state.json

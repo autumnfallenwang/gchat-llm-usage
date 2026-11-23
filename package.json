@@ -1,0 +1,26 @@
+{
+  "name": "gchat-llm-usage",
+  "version": "0.1.0",
+  "description": "Posts to a Google Chat space when a Claude or Codex usage window crosses a threshold or resets",
+  "type": "module",
+  "private": true,
+  "packageManager": "pnpm@10.29.3",
+  "scripts": {
+    "start": "node --import tsx src/index.ts",
+    "dry-run": "DRY_RUN=1 STATE_PATH=./state.json LLMGW_URL=${LLMGW_URL:-http://llmgw.llmgw.svc.cluster.local} node --import tsx src/index.ts",
+    "test": "vitest run",
+    "lint": "biome check .",
+    "lint:fix": "biome check --write .",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "pino": "^10.4.0",
+    "tsx": "^4.23.15"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.6.8",
+    "@types/node": "^26.6.6",
+    "typescript": "^7.0.2",
+    "vitest": "^5.1.1"
+  }
+}

@@ -1,0 +1,6 @@
+apiVersion: v2
+name: gchat-llm-usage
+description: Posts to a Google Chat space when a Claude or Codex usage window crosses a threshold or resets.
+type: application
+version: 0.1.0
+appVersion: "0.1.0"

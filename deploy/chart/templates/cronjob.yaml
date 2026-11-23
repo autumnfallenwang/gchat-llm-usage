@@ -1,0 +1,75 @@
+# The state file's volume (ADR 0003). Losing it only means one "now watching" summary again.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "gchat-llm-usage.fullname" . }}-state
+  labels:
+    {{- include "gchat-llm-usage.labels" . | nindent 4 }}
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: {{ .Values.persistence.storageClass }}
+  resources:
+    requests:
+      storage: {{ .Values.persistence.size }}
+---
+# One run: read llmgw's limits, post what crossed a threshold or reset, save state, exit (ADR 0002).
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ include "gchat-llm-usage.fullname" . }}
+  labels:
+    {{- include "gchat-llm-usage.labels" . | nindent 4 }}
+spec:
+  schedule: {{ .Values.schedule | quote }}
+  timeZone: {{ .Values.timeZone | quote }}
+  # Two runs at once could both post the same alert.
+  concurrencyPolicy: Forbid
+  # A run missed by more than this is skipped: the next one is minutes away.
+  startingDeadlineSeconds: 240
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      # No retries: a failed run changes no state, so the next scheduled run tries again.
+      backoffLimit: 0
+      activeDeadlineSeconds: 120
+      template:
+        metadata:
+          labels:
+            {{- include "gchat-llm-usage.selectorLabels" . | nindent 12 }}
+        spec:
+          restartPolicy: Never
+          securityContext:
+            {{- toYaml .Values.podSecurityContext | nindent 12 }}
+          containers:
+            - name: gchat-llm-usage
+              image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+              imagePullPolicy: {{ .Values.image.pullPolicy }}
+              securityContext:
+                {{- toYaml .Values.containerSecurityContext | nindent 16 }}
+              env:
+                {{- range $key, $value := .Values.env }}
+                - name: {{ $key }}
+                  value: {{ $value | quote }}
+                {{- end }}
+                - name: GCHAT_WEBHOOK_URL
+                  valueFrom:
+                    secretKeyRef:
+                      name: {{ .Values.secrets.name }}
+                      key: GCHAT_WEBHOOK_URL
+              resources:
+                {{- toYaml .Values.resources | nindent 16 }}
+              volumeMounts:
+                - name: state
+                  mountPath: /data
+                # The root filesystem is read-only; tsx keeps its compile cache in /tmp.
+                - name: tmp
+                  mountPath: /tmp
+          volumes:
+            - name: state
+              persistentVolumeClaim:
+                claimName: {{ include "gchat-llm-usage.fullname" . }}-state
+            - name: tmp
+              emptyDir:
+                sizeLimit: 64Mi

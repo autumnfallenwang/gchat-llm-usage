@@ -1,0 +1,48 @@
+# Default values for the gchat-llm-usage chart. The Argo CD Application in arch-infra overrides image.tag.
+
+image:
+  repository: ghcr.io/autumnfallenwang/gchat-llm-usage
+  # CI bumps `tag` to a commit SHA in the Argo CD Application's parameters.
+  tag: latest
+  pullPolicy: IfNotPresent
+
+# One run every 5 minutes (ADR 0002). llmgw caches limits for 60 s, so this is at most one
+# usage-endpoint call per family per run.
+schedule: "*/5 * * * *"
+timeZone: America/New_York
+
+# Created by scripts/create-cluster-secret.sh, never by the chart: the repos are public (ADR 0004).
+secrets:
+  name: gchat-llm-usage-secrets
+
+# Environment variables passed to the container. The template iterates over this map.
+env:
+  LLMGW_URL: http://llmgw.llmgw.svc.cluster.local
+  STATE_PATH: /data/state.json
+  TIME_ZONE: America/New_York
+  LOG_LEVEL: info
+
+# The state file: which threshold each window was last alerted on (ADR 0003).
+persistence:
+  storageClass: local-path
+  size: 64Mi
+
+resources:
+  requests:
+    cpu: 10m
+    memory: 64Mi
+  limits:
+    memory: 256Mi
+
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  runAsGroup: 1000
+  fsGroup: 1000
+
+containerSecurityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  capabilities:
+    drop:
+      - ALL

@@ -1,0 +1,86 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "model": null,
+      "provider": "ollama",
+      "plan": null,
+      "status": "ok",
+      "available": { "kind": "unlimited" },
+      "windows": [],
+      "balance": null,
+      "details": {},
+      "as_of": null,
+      "source": null
+    },
+    {
+      "model": null,
+      "provider": "anthropic",
+      "plan": null,
+      "status": "ok",
+      "available": {
+        "kind": "percent",
+        "percent_left": 55,
+        "resets_at": "2030-01-10T10:00:00.075Z",
+        "binding": "weekly · all models"
+      },
+      "windows": [
+        {
+          "scope": "all models",
+          "period": "weekly",
+          "used_percent": 45,
+          "resets_at": "2030-01-10T10:00:00.075Z",
+          "status": "ok"
+        },
+        {
+          "scope": "Fable",
+          "period": "weekly",
+          "used_percent": 12.5,
+          "resets_at": "2030-01-10T10:00:00.075Z",
+          "status": "ok"
+        }
+      ],
+      "balance": null,
+      "details": {},
+      "as_of": "2030-01-07T12:00:00.000Z",
+      "source": "usage endpoint"
+    },
+    {
+      "model": null,
+      "provider": "openai-codex",
+      "plan": "plus",
+      "status": "warning",
+      "available": {
+        "kind": "percent",
+        "percent_left": 15,
+        "resets_at": "2030-01-08T04:00:00.000Z",
+        "binding": "weekly · all models"
+      },
+      "windows": [
+        {
+          "scope": "all models",
+          "period": "weekly",
+          "used_percent": 85,
+          "resets_at": "2030-01-08T04:00:00.000Z",
+          "status": "warning"
+        }
+      ],
+      "balance": null,
+      "details": {},
+      "as_of": "2030-01-07T12:00:00.000Z",
+      "source": "usage endpoint"
+    },
+    {
+      "model": null,
+      "provider": "deepseek",
+      "plan": "prepaid",
+      "status": "ok",
+      "available": { "kind": "balance", "amount": 5, "currency": "USD" },
+      "windows": [],
+      "balance": { "amount": 5, "currency": "USD" },
+      "details": {},
+      "as_of": "2030-01-07T12:00:00.000Z",
+      "source": "usage endpoint"
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+node_modules/
+coverage/
+.env
+.env.*
+!.env.example
+cluster-secrets.env
+state.json
+*.log
+*.tsbuildinfo
+.DS_Store
+.claude/settings.local.json
