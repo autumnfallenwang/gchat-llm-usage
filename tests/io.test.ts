@@ -1,8 +1,8 @@
 import { mkdtemp, readFile, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { describe, expect, it } from "vitest";
-import { body, errorReason, postUrl } from "../src/gchat.js";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { body, errorReason, post, postUrl } from "../src/gchat.js";
 import { loadState, saveState } from "../src/state.js";
 
 describe("Google Chat webhook", () => {
@@ -66,5 +66,42 @@ describe("state file", () => {
     const path = join(dir, "state.json");
     await writeFile(path, '{"windows": {}}');
     await expect(loadState(path)).rejects.toThrow(/version 1/);
+  });
+});
+
+describe("post", () => {
+  const webhook = "https://chat.googleapis.com/v1/spaces/SPACE/messages?key=KEY&token=TOKEN";
+  const refused = () =>
+    new Response(JSON.stringify({ error: { status: "INVALID_ARGUMENT", message: "no" } }), {
+      status: 400,
+    });
+
+  function stubFetch(...responses: Response[]) {
+    const calls: { url: string; body: unknown }[] = [];
+    vi.stubGlobal("fetch", async (url: string, init: RequestInit) => {
+      calls.push({ url, body: JSON.parse(String(init.body)) });
+      return responses.shift() ?? new Response("{}");
+    });
+    return calls;
+  }
+
+  afterEach(() => vi.unstubAllGlobals());
+
+  it("sends a threaded message unthreaded when Google refuses the thread", async () => {
+    const calls = stubFetch(refused(), new Response("{}"));
+    await post(webhook, { text: "hi", threadKey: "k" }, 1000);
+    expect(calls).toHaveLength(2);
+    expect(new URL(calls[1]!.url).searchParams.has("messageReplyOption")).toBe(false);
+    expect(calls[1]!.body).toEqual({ text: "hi" });
+  });
+
+  it("fails on a refused message with no thread, and on errors that aren't a 400", async () => {
+    stubFetch(refused());
+    await expect(post(webhook, { text: "hi", threadKey: null }, 1000)).rejects.toThrow(
+      "Google Chat webhook: HTTP 400 (INVALID_ARGUMENT: no)",
+    );
+    const calls = stubFetch(new Response("", { status: 503 }));
+    await expect(post(webhook, { text: "hi", threadKey: "k" }, 1000)).rejects.toThrow(/HTTP 503/);
+    expect(calls).toHaveLength(1);
   });
 });

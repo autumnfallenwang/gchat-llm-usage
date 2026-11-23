@@ -22,7 +22,9 @@ and llmgw's reset times jitter by fractions of a second between fetches (`…10:
 - **State:** one JSON file on a small `local-path` PVC, written atomically, and saved only after every message of the
   run was posted, so a failed post is retried by the next run. A file that isn't valid state fails the run rather than
   starting over and re-posting the summary every 5 minutes.
-- **Threads:** a window's messages for one period share a Chat thread, keyed by its reset time to the hour.
+- **Threads:** a window's messages for one period share a Chat thread, keyed by its reset time to the hour. If Google
+  refuses the threaded post with a 400, it's sent once more without a thread (`gchat.thread_refused` in the log): a
+  post that kept failing would hold up every alert after it.
 
 ## Alternatives considered
 
