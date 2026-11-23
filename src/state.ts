@@ -6,7 +6,7 @@ import type { State } from "./rules.js";
 
 /**
  * The saved state, or null when there's none yet. A file that isn't valid state fails the run
- * rather than starting over, which would post the "now watching" summary again every 5 minutes.
+ * rather than silently starting over, so a broken volume shows up as failed jobs.
  */
 export async function loadState(path: string): Promise<State | null> {
   let raw: string;

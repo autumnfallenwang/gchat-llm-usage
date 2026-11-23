@@ -8,7 +8,7 @@ state, posts what's new and exits ([ADR 0002](docs/adr/0002-cronjob-polling-llmg
 
 ## What it posts
 
-- **First run:** one "now watching" summary, with each window's use and reset time.
+- **First run:** nothing. It records where each window is, so thresholds already passed aren't alerted on.
 - **A threshold crossed:** `🟠 *Codex weekly*: 92% used (crossed 90%). 8% left, resets Mon, Jan 7, 11:00 PM EST (in 16h 0m).`
   Only the highest threshold crossed since the last run, and never the same one twice in a period.
 - **A reset:** `🟢 *Codex weekly* reset: 0% used. Next reset …`

@@ -62,20 +62,13 @@ describe("bucketOf", () => {
 });
 
 describe("decide", () => {
-  it("posts one summary on the first run, not an alert for every threshold already passed", () => {
+  it("posts nothing on the first run, only records each window's threshold", () => {
     const r = decide(null, families(45, 12.5, 85), fmt);
-    expect(r.messages).toHaveLength(1);
-    expect(r.messages[0]?.threadKey).toBeNull();
-    expect(texts(r)[0]).toBe(
-      [
-        "👀 Watching Claude and Codex usage. Alerts at 10%, 20%, … 90% and 99% used, and when a window resets.",
-        "• *Claude weekly*: 45% used, resets Thu, Jan 10, 5:00 AM EST (in 2d 22h)",
-        "• *Claude weekly (Fable)*: 12.5% used, resets Thu, Jan 10, 5:00 AM EST (in 2d 22h)",
-        "• *Codex weekly*: 85% used, resets Mon, Jan 7, 11:00 PM EST (in 16h 0m)",
-      ].join(" "),
-    );
+    expect(r.messages).toEqual([]);
     expect(r.next?.windows["openai-codex|all models|weekly"]?.bucket).toBe(80);
     expect(r.next?.windows["anthropic|Fable|weekly"]?.bucket).toBe(10);
+    // The thresholds already passed aren't alerted on later either.
+    expect(decide(r.next, families(45, 12.5, 86), fmt).messages).toEqual([]);
   });
 
   it("saves nothing on a first run with no data, so the next run is still the first", () => {

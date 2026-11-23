@@ -1,4 +1,4 @@
-# The state file's volume (ADR 0003). Losing it only means one "now watching" summary again.
+# The state file's volume (ADR 0003). Losing it costs nothing visible: the next run records the windows again.
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:

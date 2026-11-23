@@ -54,8 +54,9 @@ export function isReset(before: WindowState, now: Window): boolean {
 }
 
 /**
- * The messages to post and the state to save. `next` is null when there's nothing to save yet:
- * a first run that found no data, so the next run still counts as the first.
+ * The messages to post and the state to save. A first run posts nothing: it only records where
+ * each window is, so thresholds already passed aren't alerted on. `next` is null when there's
+ * nothing to save yet (a first run that found no data), so the next run still counts as the first.
  */
 export function decide(
   prev: State | null,
@@ -65,7 +66,6 @@ export function decide(
   const first = prev === null;
   const next: State = { version: 1, windows: { ...prev?.windows } };
   const messages: Message[] = [];
-  const summary: Window[] = [];
 
   for (const family of families) {
     // No current data: leave its state alone, so the next good run compares with the last one.
@@ -78,9 +78,10 @@ export function decide(
     for (const w of family.windows) {
       const before = prev?.windows[w.key];
       const after: WindowState = { bucket: bucketOf(w.used), used: w.used, resets_at: w.resetsAt };
-      if (first) summary.push(w);
-      else if (!before) messages.push(newWindow(w, fmt));
-      else if (isReset(before, w)) messages.push(reset(w, fmt));
+      if (!before) {
+        // A window not seen before is announced, except on the first run, which only records.
+        if (!first) messages.push(newWindow(w, fmt));
+      } else if (isReset(before, w)) messages.push(reset(w, fmt));
       else if (after.bucket > before.bucket) messages.push(crossed(w, after.bucket, fmt));
       // Use can dip a little without a reset; don't alert on the same threshold twice.
       else after.bucket = Math.max(after.bucket, before.bucket);
@@ -88,10 +89,7 @@ export function decide(
     }
   }
 
-  if (first) {
-    if (summary.length === 0) return { messages: [], next: null };
-    messages.push(watching(summary, fmt));
-  }
+  if (first && Object.keys(next.windows).length === 0) return { messages: [], next: null };
   return { messages, next };
 }
 
@@ -164,19 +162,5 @@ function newWindow(w: Window, fmt: Format): Message {
   return {
     text: `🆕 Now watching *${label(w, fmt)}*: ${pct(w.used)} used, resets ${when(w.resetsAt, fmt)}.`,
     threadKey: threadKey(w),
-  };
-}
-
-function watching(windows: Window[], fmt: Format): Message {
-  const names = [...new Set(windows.map((w) => fmt.names[w.provider] ?? w.provider))];
-  const lines = windows.map(
-    (w) => `• *${label(w, fmt)}*: ${pct(w.used)} used, resets ${when(w.resetsAt, fmt)}`,
-  );
-  return {
-    text: [
-      `👀 Watching ${names.join(" and ")} usage. Alerts at 10%, 20%, … 90% and 99% used, and when a window resets.`,
-      ...lines,
-    ].join("\n"),
-    threadKey: null,
   };
 }
