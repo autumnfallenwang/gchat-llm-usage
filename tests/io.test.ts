@@ -2,7 +2,7 @@ import { mkdtemp, readFile, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { body, postUrl } from "../src/gchat.js";
+import { body, errorReason, postUrl } from "../src/gchat.js";
 import { loadState, saveState } from "../src/state.js";
 
 describe("Google Chat webhook", () => {
@@ -22,6 +22,21 @@ describe("Google Chat webhook", () => {
       thread: { threadKey: "k" },
     });
     expect(body({ text: "hi", threadKey: null })).toEqual({ text: "hi" });
+  });
+
+  it("reports Google's reason for a failure, with any key or token blanked", async () => {
+    const res = new Response(
+      JSON.stringify({
+        error: {
+          code: 400,
+          status: "INVALID_ARGUMENT",
+          message: "Bad thing at ?key=KEY&token=TOKEN",
+        },
+      }),
+      { status: 400 },
+    );
+    expect(await errorReason(res)).toBe("INVALID_ARGUMENT: Bad thing at ?key=…&token=…");
+    expect(await errorReason(new Response("<html>", { status: 502 }))).toBe("");
   });
 });
 
