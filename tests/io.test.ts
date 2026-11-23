@@ -9,11 +9,18 @@ describe("Google Chat webhook", () => {
   const webhook = "https://chat.googleapis.com/v1/spaces/SPACE/messages?key=KEY&token=TOKEN";
 
   it("keeps the URL's key and token and asks for replies in the thread", () => {
-    const url = new URL(postUrl(webhook));
+    const url = new URL(postUrl(webhook, { text: "hi", threadKey: "k" }));
     expect(url.pathname).toBe("/v1/spaces/SPACE/messages");
     expect(url.searchParams.get("key")).toBe("KEY");
     expect(url.searchParams.get("token")).toBe("TOKEN");
     expect(url.searchParams.get("messageReplyOption")).toBe("REPLY_MESSAGE_FALLBACK_TO_NEW_THREAD");
+  });
+
+  // Google answers a reply option with no thread key with a 400 (seen on the first cluster run).
+  it("leaves the reply option off a message with no thread", () => {
+    const url = new URL(postUrl(webhook, { text: "hi", threadKey: null }));
+    expect(url.searchParams.has("messageReplyOption")).toBe(false);
+    expect(url.searchParams.get("token")).toBe("TOKEN");
   });
 
   it("sends a thread key only when the message has one", () => {

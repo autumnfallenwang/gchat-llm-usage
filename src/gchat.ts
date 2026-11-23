@@ -4,12 +4,15 @@
 import type { Message } from "./rules.js";
 
 /**
- * The webhook URL with `messageReplyOption` set, so a message with a thread key replies in that
- * thread (or starts it). The URL's own `key` and `token` are kept as they are.
+ * The URL to post a message to. With a thread key, `messageReplyOption` makes it reply in that
+ * thread (or start it). Without one, the option must be left off: Google refuses it with a 400,
+ * "The request does not specify which message to reply to". The URL's `key` and `token` are kept.
  */
-export function postUrl(webhookUrl: string): string {
+export function postUrl(webhookUrl: string, message: Message): string {
   const url = new URL(webhookUrl);
-  url.searchParams.set("messageReplyOption", "REPLY_MESSAGE_FALLBACK_TO_NEW_THREAD");
+  if (message.threadKey) {
+    url.searchParams.set("messageReplyOption", "REPLY_MESSAGE_FALLBACK_TO_NEW_THREAD");
+  }
   return url.toString();
 }
 
@@ -20,7 +23,7 @@ export function body(message: Message): Record<string, unknown> {
 }
 
 export async function post(webhookUrl: string, message: Message, timeoutMs: number): Promise<void> {
-  const res = await fetch(postUrl(webhookUrl), {
+  const res = await fetch(postUrl(webhookUrl, message), {
     method: "POST",
     headers: { "Content-Type": "application/json; charset=UTF-8" },
     body: JSON.stringify(body(message)),
