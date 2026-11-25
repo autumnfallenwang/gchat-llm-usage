@@ -17,8 +17,8 @@ state, posts what's new and exits ([ADR 0002](docs/adr/0002-cronjob-polling-llmg
 - **A reset:** `🟢 *Codex weekly* reset: 0% used. Next reset …`
 - **A window llmgw starts reporting** (say, a 5-hour one after a plan change): `🆕 Now watching …`
 
-Each window's messages for one period share a Chat thread. Which windows exist is read from llmgw, never assumed
-([ADR 0003](docs/adr/0003-thresholds-resets-and-state.md)).
+Every alert is a new message at the bottom of the space, never a reply in a thread. Which windows exist is read from
+llmgw, never assumed ([ADR 0003](docs/adr/0003-thresholds-resets-and-state.md)).
 
 ## Develop
 

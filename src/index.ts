@@ -33,7 +33,7 @@ async function main(): Promise<void> {
   // State is saved only after every message is sent: a failed post is retried by the next run.
   for (const message of messages) {
     if (DRY_RUN) {
-      process.stdout.write(`--- thread: ${message.threadKey ?? "(new)"}\n${message.text}\n`);
+      process.stdout.write(`---\n${message.text}\n`);
     } else {
       await post(GCHAT_WEBHOOK_URL, message, FETCH_TIMEOUT_MS);
     }

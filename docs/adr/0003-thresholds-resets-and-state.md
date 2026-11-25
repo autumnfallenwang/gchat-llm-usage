@@ -26,14 +26,15 @@ and llmgw's reset times jitter by fractions of a second between fetches (`…10:
 - **State:** one JSON file on a small `local-path` PVC, written atomically, and saved only after every message of the
   run was posted, so a failed post is retried by the next run. A file that isn't valid state fails the run rather than
   silently starting over.
-- **Threads:** a window's messages for one period share a Chat thread, keyed by its reset time to the hour. If Google
-  refuses the threaded post with a 400, it's sent once more without a thread (`gchat.thread_refused` in the log): a
-  post that kept failing would hold up every alert after it.
+- **Every alert is a new message, never a reply.** Until 2026-11-25 a window's alerts for one period shared a Chat
+  thread, so only the first showed up as a new message: Claude's 80% alert went in as a reply under the day-old 70%
+  one and was missed. The later alerts are the ones that matter most, and there are only a few a week.
 
 ## Alternatives considered
 
 - **State in a ConfigMap through the Kubernetes API.** No volume, but needs a ServiceAccount and RBAC for one small file.
 - **No state: alert while use sits in a band.** Would repeat every 5 minutes.
+- **A thread per window per period.** Tidier, but it hid every alert after the first (see above).
 
 ## Consequences
 

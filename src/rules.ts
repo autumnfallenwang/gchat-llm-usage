@@ -30,10 +30,9 @@ export interface State {
   windows: Record<string, WindowState>;
 }
 
+/** One Chat message. Each is posted as a new message in the space, never a reply (ADR 0003). */
 export interface Message {
   text: string;
-  /** Messages with the same key go in one Chat thread; null starts a thread of its own. */
-  threadKey: string | null;
 }
 
 export interface Format {
@@ -134,14 +133,6 @@ export function when(resetsAt: string | null, fmt: Format): string {
   return `${at} (${relative(t - fmt.now.getTime())})`;
 }
 
-/** One thread per window per period, keyed by the period's reset time to the hour. */
-export function threadKey(w: Window): string | null {
-  const t = w.resetsAt ? Date.parse(w.resetsAt) : Number.NaN;
-  if (!Number.isFinite(t)) return null;
-  const hour = new Date(Math.round(t / 3_600_000) * 3_600_000).toISOString().slice(0, 13);
-  return `${w.provider}-${w.scope}-${w.period}-${hour}`.toLowerCase().replace(/[^a-z0-9]+/g, "-");
-}
-
 function crossed(w: Window, bucket: number, fmt: Format): Message {
   const left = Math.max(0, 100 - w.used);
   let text: string;
@@ -151,19 +142,17 @@ function crossed(w: Window, bucket: number, fmt: Format): Message {
     const icon = bucket >= 95 ? "🔴" : bucket >= 80 ? "🟠" : "🟡";
     text = `${icon} *${label(w, fmt)}*: ${pct(w.used)} used (crossed ${bucket}%). ${pct(left)} left, resets ${when(w.resetsAt, fmt)}.`;
   }
-  return { text, threadKey: threadKey(w) };
+  return { text };
 }
 
 function reset(w: Window, fmt: Format): Message {
   return {
     text: `🟢 *${label(w, fmt)}* reset: ${pct(w.used)} used. Next reset ${when(w.resetsAt, fmt)}.`,
-    threadKey: threadKey(w),
   };
 }
 
 function newWindow(w: Window, fmt: Format): Message {
   return {
     text: `🆕 Now watching *${label(w, fmt)}*: ${pct(w.used)} used, resets ${when(w.resetsAt, fmt)}.`,
-    threadKey: threadKey(w),
   };
 }

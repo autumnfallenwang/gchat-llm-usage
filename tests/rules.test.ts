@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { Family, Window } from "../src/limits.js";
-import { bucketOf, decide, type Format, type State, threadKey } from "../src/rules.js";
+import { bucketOf, decide, type Format, type State } from "../src/rules.js";
 
 const fmt: Format = {
   now: new Date("2030-01-07T12:00:00Z"),
@@ -83,13 +83,12 @@ describe("decide", () => {
     expect(decide(state, families(48, 13, 88), fmt).messages).toEqual([]);
   });
 
-  it("posts once per threshold crossed, in the window's thread", () => {
+  it("posts once per threshold crossed", () => {
     const state = stateAfter(families(45, 12.5, 85));
     const r = decide(state, families(45, 12.5, 92), fmt);
     expect(texts(r)).toEqual([
       "🟠 *Codex weekly*: 92% used (crossed 90%). 8% left, resets Mon, Jan 7, 11:00 PM EST (in 16h 0m).",
     ]);
-    expect(r.messages[0]?.threadKey).toBe("openai-codex-all-models-weekly-2030-01-08t04");
     expect(decide(r.next, families(45, 12.5, 93), fmt).messages).toEqual([]);
   });
 
@@ -127,13 +126,12 @@ describe("decide", () => {
     expect(decide(state, families(45, 12.5, 91), fmt).messages).toEqual([]);
   });
 
-  it("posts a reset when the reset time moves on, in the new period's thread", () => {
+  it("posts a reset when the reset time moves on", () => {
     const state = stateAfter(families(45, 12.5, 96));
     const r = decide(state, families(45, 12.5, 0, "2030-01-15T04:00:00.000Z"), fmt);
     expect(texts(r)).toEqual([
       "🟢 *Codex weekly* reset: 0% used. Next reset Mon, Jan 14, 11:00 PM EST (in 7d 16h).",
     ]);
-    expect(r.messages[0]?.threadKey).toBe("openai-codex-all-models-weekly-2030-01-15t04");
     expect(r.next?.windows["openai-codex|all models|weekly"]?.bucket).toBe(0);
     // The new period alerts from 10% again.
     expect(
@@ -158,9 +156,6 @@ describe("decide", () => {
       })),
     }));
     expect(decide(state, jittered, fmt).messages).toEqual([]);
-    expect(threadKey(jittered[0]!.windows[0]!)).toBe(
-      threadKey(families(45, 12.5, 85)[0]!.windows[0]!),
-    );
   });
 
   it("leaves a family's state alone while llmgw has no data for it", () => {
